@@ -1,11 +1,18 @@
 {
+  "name": "anarchistbot",
+  "description": "just simple telegram bot",
+  "version": "1.0.0",
+  "main": "index.js",
   "type": "module",
   "scripts": {
     "start": "nodemon node index.js"
   },
   "dependencies": {
+    "@google-cloud/vision": "^3.1.2",
     "dotenv": "^16.0.3",
+    "express": "^4.18.2",
     "node-telegram-bot-api": "^0.61.0",
+    "tesseract.js": "^4.0.2",
     "transliteration": "^2.3.5"
   }
 }
