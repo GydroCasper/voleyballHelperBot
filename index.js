@@ -6,14 +6,6 @@ import { transliterate } from 'transliteration'
 
 dotenv.config()
 
-import express from 'express';
-
-const app = express()
-
-app.listen(8080, () => {
-    console.log(`Server running on port 8080`);
-  })
-
 const bot = new telegramBot(process.env.BOT_TOKEN, { polling: true })
 
 bot.on('message', (msg) => {
