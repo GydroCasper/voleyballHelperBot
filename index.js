@@ -1,12 +1,16 @@
 import telegramBot from "node-telegram-bot-api"
 import dotenv from "dotenv"
 import { transliterate } from "transliteration"
+import fetch from 'node-fetch'
+import FormData from 'form-data'
+import fs from "fs"
+import util from "util"
+
 const vision = await import("@google-cloud/vision")
 
 dotenv.config()
 
-import fs from "fs"
-import util from "util"
+
 const logFile = fs.createWriteStream("log.txt", { flags: "a" })
 const logStdout = process.stdout
 
@@ -23,9 +27,10 @@ bot.on("message", (msg) => {
   if (sentByTolya(msg)) {
     console.log("sent by Tolya")
     createVenmoPaymentLink(msg)
+    return
   }
 
-  if (msg.text === "/recognize") {
+  if (msg.photo) {
     recognizeReceipt(msg)
   }
 })
@@ -53,9 +58,22 @@ const createVenmoPaymentLink = (msg) => {
 
 const recognizeReceipt = async (msg) => {
   const chatId = msg.chat.id
+  const fileId = msg.photo[msg.photo.length-1].file_id
+  const file = await bot.getFile(fileId)
+  const url = `https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${file.file_path}`
+  const res = await fetch(url)
+  const buffer = await res.arrayBuffer()
+  const uint8array = new Uint8Array(buffer)
+
+  const request = {
+      image: {
+          content: uint8array,
+      },
+  }
+
   const client = new vision.ImageAnnotatorClient()
 
-  const output = await client.textDetection("./receipt.jpeg")
+  const output = await client.textDetection(request)
   const rows = output[0].textAnnotations[0].description.split("\n")
 
   let plates = collectPlatesFullNames(rows)
@@ -215,6 +233,7 @@ const calculatePriceForEach = (plates) => {
       continue
     }
     let amount = 1
+    const originalPrice = plate.price
     if (isFirstWordAmount(plate.fullName)) {
       amount = plate.fullName.trim().split(" ")[0]
       plate.fullName = plate.fullName.slice(amount.length).trim()
@@ -225,6 +244,8 @@ const calculatePriceForEach = (plates) => {
       plate.price = plate.price / +amount
       plate.fullName += " - each"
     }
+
+    plate.fullName += ` (${originalPrice} for ${amount})`
 
     plate.price = Math.ceil(plate.price * 100) / 100
   }
