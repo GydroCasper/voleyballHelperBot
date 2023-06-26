@@ -76,16 +76,19 @@ const recognizeReceipt = async (msg) => {
     tg
   )
 
-  printPlates(plates)
-  bot.sendMessage(chatId, "Done")
+  calculatePriceForEach(plates)
+
+  const platesToPrint = printPlates(plates)
+  bot.sendMessage(chatId, platesToPrint)
 }
 
 const isPrice = (str) => str.startsWith("$")
 
 const printPlates = (plates) => {
+  let response = ''
   for (let ind = 0; ind < plates.length; ind++) {
     const plate = plates[ind]
-    console.log(`${plate.fullName}: $${plate.price}`)
+    response += (`${plate.fullName}\t${plate.price != null ? ': $' : ''}${plate.price ?? ''}\n`)
     // console.log("fullName: ", plate.fullName)
     // for (let blockInd = 0; blockInd < plate.blocks.length; blockInd++) {
     //   const block = plate.blocks[blockInd]
@@ -93,6 +96,8 @@ const printPlates = (plates) => {
     // }
     // console.log("price: ", plate.price)
   }
+
+  return response
 }
 
 const collectPlatesFullNames = (rows) => {
@@ -103,7 +108,6 @@ const collectPlatesFullNames = (rows) => {
     plates.push({
       fullName: row.trim(),
       blocks: [],
-      coef: null,
     })
   }
 
@@ -201,4 +205,32 @@ const enrichPlatesWithPrices = (
 
     plates[closestPlate.plateIndex].price = +block.description
   }
+}
+
+const calculatePriceForEach = (plates) => {
+  for (let i = 0; i < plates.length; i++) {
+    const plate = plates[i]
+    if (isNaN(plate.price)) {
+      plate.price = null
+      continue
+    }
+    let amount = 1
+    if (isFirstWordAmount(plate.fullName)) {
+      amount = plate.fullName.trim().split(" ")[0]
+      plate.fullName = plate.fullName.slice(amount.length).trim()
+    }
+
+    plate.price = plate.price * 1.284
+    if (+amount > 1) {
+      plate.price = plate.price / +amount
+      plate.fullName += " - each"
+    }
+
+    plate.price = Math.ceil(plate.price * 100) / 100
+  }
+}
+
+const isFirstWordAmount = (row) => {
+  let words = row.trim().split(" ")
+  return !isNaN(words[0].trim()) && words[1].trim() != "oz"
 }
