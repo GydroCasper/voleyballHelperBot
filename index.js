@@ -2,22 +2,21 @@ import telegramBot from "node-telegram-bot-api"
 import dotenv from "dotenv"
 import { transliterate } from "transliteration"
 import fetch from 'node-fetch'
-import FormData from 'form-data'
-import fs from "fs"
-import util from "util"
+// import fs from "fs"
+// import util from "util"
 
 const vision = await import("@google-cloud/vision")
 
 dotenv.config()
 
 
-const logFile = fs.createWriteStream("log.txt", { flags: "a" })
-const logStdout = process.stdout
+// const logFile = fs.createWriteStream("log.txt", { flags: "a" })
+// const logStdout = process.stdout
 
-console.log = function () {
-  logFile.write(util.format.apply(null, arguments) + "\n")
-  logStdout.write(util.format.apply(null, arguments) + "\n")
-}
+// console.log = function () {
+//   logFile.write(util.format.apply(null, arguments) + "\n")
+//   logStdout.write(util.format.apply(null, arguments) + "\n")
+// }
 
 const bot = new telegramBot(process.env.BOT_TOKEN, { polling: true })
 
